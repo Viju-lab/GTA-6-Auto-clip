@@ -1,0 +1,52 @@
+
+name: GTA Auto Clips
+
+on:
+  workflow_dispatch:
+    inputs:
+      video_url:
+        description: "Streamer-provided direct MP4 video URL"
+        required: true
+        type: string
+
+jobs:
+  create-clips:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Download video
+        env:
+          VIDEO_URL: ${{ inputs.video_url }}
+        run: |
+          if [[ "$VIDEO_URL" != https://* ]]; then
+            echo "HTTPS URL required"
+            exit 1
+          fi
+
+          mkdir -p output
+          curl -fL --max-time 3600 \
+            "$VIDEO_URL" -o source.mp4
+
+      - name: Install FFmpeg
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ffmpeg
+
+      - name: Create vertical clips
+        run: |
+          ffmpeg -i source.mp4 \
+            -vf "scale=1080:1920:force_original_aspect_ratio=increase,crop=1080:1920" \
+            -c:v libx264 \
+            -preset veryfast \
+            -c:a aac \
+            -f segment \
+            -segment_time 45 \
+            -reset_timestamps 1 \
+            output/clip_%03d.mp4
+
+      - name: Save Shorts
+        uses: actions/upload-artifact@v4
+        with:
+          name: GTA-Shorts
+          path: output/*.mp4
+          
