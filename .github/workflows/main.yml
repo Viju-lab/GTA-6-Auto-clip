@@ -1,0 +1,13 @@
+name: GTA Auto Clips
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 2 * * *"
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Start system
+        run: echo "GTA Auto Clips system is ready"
